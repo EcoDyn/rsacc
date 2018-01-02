@@ -1,0 +1,63 @@
+Development notes for thr rsacc package
+
+The purpose of the package is to perform accuracy assessment of remote sensing classifications.
+
+The two inputs necessary are a classification, and a set of validation data.
+
+- Both the classification and the validation data can come in two flavours: a raster or a vector
+
+- While vector classifications will always be polygons, vector validatiuon data can be polygons or points
+
+The most common expected combination is raster classification and vector validation, so this will be developed first.
+
+What do we need in terms of algorithm:
+
+1) Input
+- Read in classification
+    - Is it vector or raster?
+    - What is the projection?
+
+- Read in validation
+    - Is it vector or raster?
+    - Is it point or polygon?
+    - What is the projection?
+
+2) Data prep
+    - Does the data need to be reprojected?
+        - Yes: reproject the validation, as it should usually be lighter
+    - If raster x raster, does it need to be resampled to match?
+    - MAIN ISSUE: dealing with class labels. Rasters use numbers, vectors can use either numbers or names
+
+3) Extraction of confusion matrix (classification x reference)
+    - Extraction for raster x raster
+    - Extraction for raster x points
+    - Extraction for raster x polygons
+    - Extraction for polygons x points
+    - Extraction for polygons x polygons
+
+    VALIDATION SCENARIOS:
+    - Single vector with all classes labelled by numbers
+    - Single vector with all classes labeleed by strings
+    - One vector per each class, including labels
+    - One vector per class, filename is the label
+
+4) Assessment
+    - Measures of agreement
+        - Percent accuracy (overall and per class)
+        - Omission and Comission (per class)
+        - Kappa
+        - Kappa inferences
+        - Pontius
+
+5) Outputs
+    - Console report
+    - TXT report
+    - CSV with confusion matrix
+    - Graphical output?
+
+
+
+
+
+
+
