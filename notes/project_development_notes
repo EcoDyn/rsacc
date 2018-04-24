@@ -27,6 +27,7 @@ What do we need in terms of algorithm:
         - Yes: reproject the validation, as it should usually be lighter
     - If raster x raster, does it need to be resampled to match?
     - MAIN ISSUE: dealing with class labels. Rasters use numbers, vectors can use either numbers or names
+        - Check if labels are comparable (same length, same values)
 
 3) Extraction of confusion matrix (classification x reference)
     - Extraction for raster x raster
