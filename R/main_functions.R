@@ -116,7 +116,16 @@ conf_mat <- function(map, val, field, reproj=FALSE){
         mapvals <- extract(map,val,sp=T)
         cmat <-  table(rasval[,field],mapvals)
     }
-
+    # Build confusion matrix for SpatialPolygons vs SpatialPolygons
+    if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPolygons")) {
+        stop("Not supported yet! :-(")
+    }
+    # Build confusion matrix for SpatialPolygons vs SpatialPoints
+    if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPoints")) {
+        ids <- unlist(over(val,map_poly))
+        classdf <- data.frame(mapvals=map_poly@data$DN[ids],valvals=val$DN)
+        cmat <- table(classdf)
+    }
     return(cmat)
 }
 
