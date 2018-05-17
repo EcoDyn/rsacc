@@ -56,15 +56,15 @@ val_points <- shapefile("sample_data/site_447_classified_points.shp")
 
 check_inputs <- function(map,val,reproj=FALSE){
     # Returns object classes so user knows what she is working with
-    print(paste("Map data is a", class(map)))
-    print(paste("Reference data is a", class(val)))
+    message(paste("Map data is a", class(map)))
+    message(paste("Reference data is a", class(val)))
 
     # Inform user of map and val projections and test if they
     # are the same. Throw error if reproj = FALSE
 
     if (projection(map) != projection(val)){
-        print(paste("Map projection: ",projection(map)))
-        print(paste("Reference projection: ",projection(val)))
+        message(paste("Map projection: ",projection(map)))
+        message(paste("Reference projection: ",projection(val)))
         if (reproj == TRUE){
            return(FALSE)
         } else {
@@ -72,7 +72,7 @@ check_inputs <- function(map,val,reproj=FALSE){
             stop("Error! Map projections are not equal. Use reproj=TRUE.")
         }
     } else {
-        print(paste("Projections are the same: ",projection(map)))
+        message(paste("Projections are the same: ",projection(map)))
         return(TRUE)
     }
 }
@@ -84,32 +84,48 @@ check_inputs <- function(map,val,reproj=FALSE){
 #### field = name of the class label field on spatial data
 #### reproj = should the validation be reprojected to match the classification?
 
-conf_mat <- function(map, val, field, reproj=FALSE){
+conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE){
 
     # Reprojects val data to match map
     check <- check_inputs(map,val,reproj = reproj)
     if (check == FALSE & reproj == FALSE){
         stop("Projections are not the same!")} else {
-        print("Reprojecting validation to match map.")
+        message("Reprojecting validation to match map.")
 
         # If val is a Spatial object
         if (inherits(val,'Spatial')){
             val <- spTransform(val,CRSobj = projection(map))
-            print(projection(val))
         }
 
         # If val is a Raster object
         if (inherits(val,'Raster')){
-        val <- projectRaster(val,crs = projection(map))
-        print(projection(val))
+        val <- projectRaster(val,crs = projection(map), method = "ngb")
         }
     }
 
-    # Build confusion matrix for Raster vs raster
+    # Build confusion matrix for Raster vs Raster
     if (class(map) == "RasterLayer" & class(val) == "RasterLayer"){
         map_val <- resample(map,val)
-        cmat <- crosstab(map_val,val)
+
+        # Replace indicated na_val with NA
+        if (!is.na(na_val)){
+            val[val == na_val] <- NA
+            map_val[map_val == na_val] <- NA
+        }
+
+        # Compute confusion matrix
+        cmat <- na.omit(crosstab(map_val,val))
+        cdf <- as.data.frame(matrix(cmat$Freq,
+                                    nrow=length(unique(cmat$Var1)),
+                                    ncol=length(unique(cmat$Var2)),
+                                    byrow=F))
+        valnames <- na.omit(as.character(unique(cmat$Var2)))
+        mapnames <- na.omit(as.character(unique(cmat$Var1)))
+        names(cdf) <- valnames
+        rownames(cdf) <- mapnames
+        return(cdf)
     }
+
     # Build confusion matrix for Raster vs SpatialPolygons
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPolygons")) {
         rasval <- rasterize(val, map, field = field)
@@ -140,8 +156,12 @@ conf_mat <- function(map, val, field, reproj=FALSE){
 # reproj = F PASS
 conf_mat(map_ras,val_ras)
 
-# reproj = T PASS **BUT NEED TO FORMAT THE OUTPUT**
-conf_mat(map_ras,val_ras,reproj=T)
+# reproj = T PASS
+cf <- conf_mat(map_ras,val_ras,reproj=T)
+
+# reproj = T & na_val = 0 PASS
+conf_mat(map_ras,val_ras,reproj=T, na_val=0)
+
 
 ## Raster vs SpatialPolygons
 
@@ -150,6 +170,7 @@ conf_mat(map_ras,val_poly)
 
 # reproj = T PASS **BUT NEED TO FORMAT THE OUTPUT**
 conf_mat(map_ras,val_poly,reproj=T)
+
 
 ## Raster vs SpatialPoints
 
