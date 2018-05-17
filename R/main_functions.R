@@ -157,8 +157,15 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
     }
     # Build confusion matrix for Raster vs SpatialPoints
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPoints")) {
-        mapvals <- extract(map,val,sp=T)
-        cmat <-  table(rasval[,field],mapvals)
+
+        # Replace specified na_val with NA
+        if (!is.na(na_val)){
+            val@data[val@data[,val_field] == na_val,val_field] <- NA
+            map[map == na_val] <- NA
+        }
+
+        mapvals <- extract(map,val)
+        cmat <-  table(val@data[,val_field],mapvals)
     }
     # Build confusion matrix for SpatialPolygons vs SpatialPolygons
     if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPolygons")) {
@@ -194,17 +201,6 @@ conf_mat(map_ras,val_poly,reproj=T,val_field = "DN")
 # reproj = T & val_field given & na_val = 0 PASS
 conf_mat(map_ras,val_poly,reproj=T,val_field = "DN",na_val = 0)
 
-
-
-
-
-
-
-
-
-
-
-
 ## Raster vs SpatialPoints
 
 # reproj = F PASS
@@ -213,8 +209,12 @@ conf_mat(map_ras,val_points)
 # reproj = T PASS
 conf_mat(map_ras,val_points,reproj=T)
 
-# reproj = T & field != NA
-conf_mat(map_ras, val_points, val_field = "DN", reproj=T)
+# reproj = T & field != NA PASS
+cf <- conf_mat(map_ras, val_points, val_field = "DN", reproj=T)
+
+# reproj = T & field != NA & na_val given PASS
+cf <- conf_mat(map_ras, val_points, val_field = "DN", reproj=T, na_val=0)
+
 
 ## SpatialPolygon vs SpatialPolygon
 
