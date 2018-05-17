@@ -1,7 +1,11 @@
-### Accuracy assessment of remote sensing classifications
+### Package rsacc: accuracy assessment of remote sensing classifications
 
-### Input data are 'map' and 'val', which would be raster or spatial objects
-### read in usinf the raster package
+### This file contains necessary functions to receive and check different
+### types of input data, and compute the confusion matrices that will feed
+### the calculation of accuracy metrics
+
+### Input data are defind 'map' and 'val', which would be raster or spatial objects
+### read in by the user using the raster package
 
 ### Dependencies
 
@@ -10,43 +14,6 @@ library(rgdal)
 library(sp)
 library(rgeos)
 library(maptools)
-
-### test data
-
-### Test data is comprised of a Landsat classification of a region
-### in Sao Paulo, Brazil, made using Google Earth Engine.
-###
-### Training and validation data was extracted from the
-### Global Land Cover Validation Reference Dataset:
-###
-### https://landcover.usgs.gov/glc/
-### /sample_data/readme_Global_30m_Land_Cover_ReferenceDatatset.txt
-###
-### NOTE: Projections are intentionally not the same between classification
-### and validation, to test projection checks and reprojection options
-
-### Classes are:
-### 0 = No Data
-### 1 = Tree
-### 2 = Water
-### 3 = Barren
-### 4 = Other Vegetation
-
-### Raster version of the classified region, in GeoTIFF format:
-map_ras <- raster("sample_data/LandsatClassification.tif")
-
-### The polygonized version of the above dataset:
-map_poly <- shapefile("sample_data/LandsatClassification/LandsatClassification.shp")
-
-### This is the validation scene obtained as above.
-val_ras <- raster("sample_data/site_447_classified.tif")
-
-### Validation scene converted to polygons
-val_poly <- shapefile("sample_data/site_447_classified_poly.shp")
-
-### Random points extracted from the validation scene
-val_points <- shapefile("sample_data/site_447_classified_points.shp")
-
 
 #### Function to check the type and validity of the files
 #### Parameters are:
@@ -181,63 +148,5 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
     }
     return(cmat)
 }
-
-### Testing the functions
-
-## Raster vs Raster
-# reproj = F PASS
-conf_mat(map_ras,val_ras)
-# reproj = T PASS
-cf <- conf_mat(map_ras,val_ras,reproj=T)
-# reproj = T & na_val = 0 PASS
-conf_mat(map_ras,val_ras,reproj=T, na_val=0)
-
-
-## Raster vs SpatialPolygons
-# reproj = F PASS
-conf_mat(map_ras,val_poly)
-# reproj = T
-conf_mat(map_ras,val_poly,reproj=T)
-# reproj = T & val_field given PASS
-conf_mat(map_ras,val_poly,reproj=T,val_field = "DN")
-# reproj = T & val_field given & na_val = 0 PASS
-conf_mat(map_ras,val_poly,reproj=T,val_field = "DN",na_val = 0)
-
-## Raster vs SpatialPoints
-
-# reproj = F PASS
-conf_mat(map_ras,val_points)
-# reproj = T PASS
-conf_mat(map_ras,val_points,reproj=T)
-# reproj = T & field != NA PASS
-cf <- conf_mat(map_ras, val_points, val_field = "DN", reproj=T)
-# reproj = T & field != NA & na_val given PASS
-cf <- conf_mat(map_ras, val_points, val_field = "DN", reproj=T, na_val=0)
-
-
-## SpatialPolygon vs SpatialPolygon
-# map_field = NA PASS
-conf_mat(map_poly,val_poly)
-# map_field = given and val_field = NA PASS
-conf_mat(map_poly,val_poly, map_field="DN")
-# map_field = given, val_field = given, reproj = F PASS
-conf_mat(map_poly,val_poly, map_field="DN", val_field = "DN")
-# map_field = given, val_field = given, reproj = T PASS **BUT NOT IMPLEMENTED**
-conf_mat(map_poly,val_poly, map_field="DN", val_field = "DN", reproj = T)
-# map_field = given, val_field = given, reproj = T, na_val = given NOT TESTED
-conf_mat(map_poly,val_poly, map_field="DN", val_field = "DN", reproj = T)
-
-
-## SpatialPolygon vs SpatialPoints
-# map_field = NA PASS
-conf_mat(map_poly,val_points)
-# map_field = given and val_field = NA PASS
-conf_mat(map_poly,val_points, map_field="DN")
-# map_field = given, val_field = given, reproj = F PASS
-conf_mat(map_poly,val_points, map_field="DN", val_field = "DN")
-# map_field = given, val_field = given, reproj = T PASS
-cf <- conf_mat(map_poly,val_points, map_field="DN", val_field = "DN", reproj = T)
-# map_field = given, val_field = given, reproj = T, na_val = given PASS
-cf <- conf_mat(map_poly,val_points, map_field="DN", val_field = "DN", reproj = T, na_val = 0)
 
 
