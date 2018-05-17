@@ -87,7 +87,7 @@ check_inputs <- function(map,val,reproj=FALSE){
 conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE){
 
     # Check if all required parameters are given
-    if (inherits(map,"Spatial") & is.na(val_field)){
+    if (inherits(map,"Spatial") & is.na(map_field)){
         stop("Classification dataset is a vector. Please specify the field name holding class names using 'val_field'.")
     }
     if (inherits(val,"Spatial") & is.na(val_field)){
@@ -155,6 +155,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
         rownames(cdf) <- mapnames
         return(cdf)
     }
+
     # Build confusion matrix for Raster vs SpatialPoints
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPoints")) {
 
@@ -167,15 +168,16 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
         mapvals <- extract(map,val)
         cmat <-  table(val@data[,val_field],mapvals)
     }
+
     # Build confusion matrix for SpatialPolygons vs SpatialPolygons
     if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPolygons")) {
         stop("Not supported yet! :-(")
     }
+
     # Build confusion matrix for SpatialPolygons vs SpatialPoints
     if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPoints")) {
-        ids <- unlist(over(val,map_poly))
-        classdf <- data.frame(mapvals=map@data[ids,field],valvals=val[,field])
-        cmat <- table(classdf)
+        mapvals <- over(val, map[,map_field])
+        cmat <- table(val@data[,val_field],mapvals[,map_field])
     }
     return(cmat)
 }
@@ -205,31 +207,37 @@ conf_mat(map_ras,val_poly,reproj=T,val_field = "DN",na_val = 0)
 
 # reproj = F PASS
 conf_mat(map_ras,val_points)
-
 # reproj = T PASS
 conf_mat(map_ras,val_points,reproj=T)
-
 # reproj = T & field != NA PASS
 cf <- conf_mat(map_ras, val_points, val_field = "DN", reproj=T)
-
 # reproj = T & field != NA & na_val given PASS
 cf <- conf_mat(map_ras, val_points, val_field = "DN", reproj=T, na_val=0)
 
 
 ## SpatialPolygon vs SpatialPolygon
-
-# reproj = F PASS
+# map_field = NA PASS
 conf_mat(map_poly,val_poly)
+# map_field = given and val_field = NA PASS
+conf_mat(map_poly,val_poly, map_field="DN")
+# map_field = given, val_field = given, reproj = F PASS
+conf_mat(map_poly,val_poly, map_field="DN", val_field = "DN")
+# map_field = given, val_field = given, reproj = T PASS **BUT NOT IMPLEMENTED**
+conf_mat(map_poly,val_poly, map_field="DN", val_field = "DN", reproj = T)
+# map_field = given, val_field = given, reproj = T, na_val = given NOT TESTED
+conf_mat(map_poly,val_poly, map_field="DN", val_field = "DN", reproj = T)
 
-# reproj = T PASS **BUT NOT IMPLEMENTED**
-conf_mat(map_poly,val_poly,reproj=T)
 
 ## SpatialPolygon vs SpatialPoints
-
-# reproj = F PASS
+# map_field = NA PASS
 conf_mat(map_poly,val_points)
-
-# reproj = T FAIL
-conf_mat(map_poly,val_points,field="DN",reproj=T)
+# map_field = given and val_field = NA PASS
+conf_mat(map_poly,val_points, map_field="DN")
+# map_field = given, val_field = given, reproj = F PASS
+conf_mat(map_poly,val_points, map_field="DN", val_field = "DN")
+# map_field = given, val_field = given, reproj = T PASS
+cf <- conf_mat(map_poly,val_points, map_field="DN", val_field = "DN", reproj = T)
+# map_field = given, val_field = given, reproj = T, na_val = given PASS
+cf <- conf_mat(map_poly,val_points, map_field="DN", val_field = "DN", reproj = T, na_val = 0)
 
 
