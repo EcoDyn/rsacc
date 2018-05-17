@@ -22,6 +22,8 @@ library(maptools)
 ### https://landcover.usgs.gov/glc/
 ### /sample_data/readme_Global_30m_Land_Cover_ReferenceDatatset.txt
 ###
+### NOTE: Projections are intentionally not the same between classification
+### and validation, to test projection checks and reprojection options
 
 ### Classes are:
 ### 0 = No Data
@@ -79,13 +81,15 @@ check_inputs <- function(map,val,reproj=FALSE){
 #### Parameters are:
 #### map = classification results: raster or spatial polygons
 #### val = reference data: raster, spatial polygons or spatial points
+#### field = name of the class label field on spatial data
 #### reproj = should the validation be reprojected to match the classification?
 
 conf_mat <- function(map, val, field, reproj=FALSE){
 
     # Reprojects val data to match map
     check <- check_inputs(map,val,reproj = reproj)
-    if (check == FALSE & reproj == TRUE){
+    if (check == FALSE & reproj == FALSE){
+        stop("Projections are not the same!")} else {
         print("Reprojecting validation to match map.")
 
         # If val is a Spatial object
@@ -123,17 +127,52 @@ conf_mat <- function(map, val, field, reproj=FALSE){
     # Build confusion matrix for SpatialPolygons vs SpatialPoints
     if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPoints")) {
         ids <- unlist(over(val,map_poly))
-        classdf <- data.frame(mapvals=map_poly@data$DN[ids],valvals=val$DN)
+        classdf <- data.frame(mapvals=map@data[ids,field],valvals=val[,field])
         cmat <- table(classdf)
     }
     return(cmat)
 }
 
-# Testing functions
+### Testing the functions
 
-# raster vs poly
-# raster vs points
-# poly vs poly
-# poly vs points
+## Raster vs Raster
+
+# reproj = F PASS
+conf_mat(map_ras,val_ras)
+
+# reproj = T PASS **BUT NEED TO FORMAT THE OUTPUT**
+conf_mat(map_ras,val_ras,reproj=T)
+
+## Raster vs SpatialPolygons
+
+# reproj = F PASS
+conf_mat(map_ras,val_poly)
+
+# reproj = T PASS **BUT NEED TO FORMAT THE OUTPUT**
+conf_mat(map_ras,val_poly,reproj=T)
+
+## Raster vs SpatialPoints
+
+# reproj = F PASS
+conf_mat(map_ras,val_points)
+
+# reproj = T FAIL
+conf_mat(map_ras,val_points,reproj=T)
+
+## SpatialPolygon vs SpatialPolygon
+
+# reproj = F PASS
+conf_mat(map_poly,val_poly)
+
+# reproj = T PASS **BUT NOT IMPLEMENTED**
+conf_mat(map_poly,val_poly,reproj=T)
+
+## SpatialPolygon vs SpatialPoints
+
+# reproj = F PASS
+conf_mat(map_poly,val_points)
+
+# reproj = T FAIL
+conf_mat(map_poly,val_points,field="DN",reproj=T)
 
 
