@@ -21,6 +21,8 @@
 ### 3 = Barren
 ### 4 = Other Vegetation
 
+library(raster)
+
 ### Raster version of the classified region, in GeoTIFF format:
 map_ras <- raster("sample_data/LandsatClassification.tif")
 
