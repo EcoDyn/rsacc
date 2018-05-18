@@ -1,5 +1,7 @@
 # rsacc
 
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 An `R` package to perform accuracy assessment of remote sensing land-use classifications. The package can auto-detect input types, and then reproject and/or resample data if necessary and adapt calculations for different input combinations.
 
 To install, you will need the `devtools` package installed:
