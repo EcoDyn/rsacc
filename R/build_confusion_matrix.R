@@ -12,8 +12,8 @@
 library(raster)
 library(rgdal)
 library(sp)
-library(rgeos)
-library(maptools)
+#library(rgeos)
+#library(maptools)
 
 #### Function to check the type and validity of the files
 #### Parameters are:
@@ -90,13 +90,13 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
         # Compute confusion matrix
         cmat <- na.omit(crosstab(map_val,val))
-        cdf <- as.data.frame(matrix(cmat$Freq,
-                                    nrow=length(unique(cmat$Var1)),
-                                    ncol=length(unique(cmat$Var2)),
-                                    byrow=F))
+        cdf <- matrix(cmat$Freq,
+                      nrow=length(unique(cmat$Var1)),
+                      ncol=length(unique(cmat$Var2)),
+                      byrow=F)
         valnames <- na.omit(as.character(unique(cmat$Var2)))
         mapnames <- na.omit(as.character(unique(cmat$Var1)))
-        names(cdf) <- valnames
+        colnames(cdf) <- valnames
         rownames(cdf) <- mapnames
         return(cdf)
     }
@@ -112,13 +112,13 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
         }
 
         cmat <-  na.omit(crosstab(map,rasval))
-        cdf <- as.data.frame(matrix(cmat$Freq,
-                                    nrow=length(unique(cmat$Var1)),
-                                    ncol=length(unique(cmat$Var2)),
-                                    byrow=F))
+        cdf <- matrix(cmat$Freq,
+                      nrow=length(unique(cmat$Var1)),
+                      ncol=length(unique(cmat$Var2)),
+                      byrow=F)
         valnames <- na.omit(as.character(unique(cmat$Var2)))
         mapnames <- na.omit(as.character(unique(cmat$Var1)))
-        names(cdf) <- valnames
+        colnames(cdf) <- valnames
         rownames(cdf) <- mapnames
         return(cdf)
     }

@@ -1,11 +1,20 @@
 Package: rsacc
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Accuracy Assessment for Remote Sensing Classification
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Thiago Sanna Freire Silva
+Maintainer: Thiago Sanna Freire Silva <thiago.sf.silva@unesp.br>
+Description: This package provides function for computing confusion matrices
+and calculating common classification accuracy metrics used to evaluate the
+results of land cover classification using remote sensing images.
+    Although several packages in R implement similar metrics, what differentiates
+this package is the provision of a framework based on exptected land cover
+classification data formats and input types (rasters, vector polygons, vector points),
+with automated detection of input type and calculation of accuracy metrics accordingly.
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+Depends:
+    raster,
+    rgdal,
+    sp
