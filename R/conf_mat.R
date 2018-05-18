@@ -1,56 +1,26 @@
-### Package rsacc: accuracy assessment of remote sensing classifications
+#' Build a confusion matrix from classified *raster* or *Spatial* objects.
+#'
+#' This function builds confusion matrices by overlaying *raster* or *Spatial* objects, automatically choosing the best method depending on input class.
+#'
+#' @param map classification results as a *raster* or *SpatialPolygons* object.
+#' @param val reference data for validating the classification. Accepts *raster*, *SpatialPolygons* or *SpatialPoints* objects.
+#' @param map_field Which column of the classified *SpatialPolygonsDataFrame* has class labels? Only used if map input is a *SpatialPolygon* object
+#' @param val_field Which column of the validation *SpatialPolygonsDataFrame* or *SpatialPointsDataFrame* has class labels? Only used if validation input is a *Spatial* object.
+#' @param reproj logical flag indicating if classification data should be reprojected to match reference data.
+#' @param na_val are there data values that should be considered as NODATA? Specified value will be replaced by NA.
+#' @return The sum of \code{x} and \code{y}
+#'
+#' @importFrom sp spTransform
+#' @importFrom sp over
+#' @importFrom raster projection
+#' @importFrom raster resample
+#' @importFrom raster projectRaster
+#' @importFrom raster extract
+#' @importFrom stats na.omit
 
-### This file contains necessary functions to receive and check different
-### types of input data, and compute the confusion matrices that will feed
-### the calculation of accuracy metrics
 
-### Input data are defind 'map' and 'val', which would be raster or spatial objects
-### read in by the user using the raster package
 
-### Dependencies
-
-library(raster)
-library(rgdal)
-library(sp)
-#library(rgeos)
-#library(maptools)
-
-#### Function to check the type and validity of the files
-#### Parameters are:
-#### map = classification results: raster or spatial polygons
-#### val = reference data: raster, spatial polygons or spatial points
-#### reproj = should the validation be reprojected to match the classification?
-
-check_inputs <- function(map,val,reproj=FALSE){
-    # Returns object classes so user knows what she is working with
-    message(paste("Map data is a", class(map)))
-    message(paste("Reference data is a", class(val)))
-
-    # Inform user of map and val projections and test if they
-    # are the same. Throw error if reproj = FALSE
-
-    if (projection(map) != projection(val)){
-        message(paste("Map projection: ",projection(map)))
-        message(paste("Reference projection: ",projection(val)))
-        if (reproj == TRUE){
-           return(FALSE)
-        } else {
-            return(FALSE)
-            stop("Error! Map projections are not equal. Use reproj=TRUE.")
-        }
-    } else {
-        message(paste("Projections are the same: ",projection(map)))
-        return(TRUE)
-    }
-}
-
-### Function to build the confusion matrix
-#### Parameters are:
-#### map = classification results: raster or spatial polygons
-#### val = reference data: raster, spatial polygons or spatial points
-#### field = name of the class label field on spatial data
-#### reproj = should the validation be reprojected to match the classification?
-
+#' @export
 conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE){
 
     # Check if all required parameters are given
@@ -69,18 +39,18 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
         # If val is a Spatial object
         if (inherits(val,'Spatial')){
-            val <- spTransform(val,CRSobj = projection(map))
+            val <- sp::spTransform(val,CRSobj = raster::projection(map))
         }
 
         # If val is a Raster object
         if (inherits(val,'Raster')){
-        val <- projectRaster(val,crs = projection(map), method = "ngb")
+        val <- raster::projectRaster(val,crs = raster::projection(map), method = "ngb")
         }
     }
 
     # Build confusion matrix for Raster vs Raster
     if (class(map) == "RasterLayer" & class(val) == "RasterLayer"){
-        map_val <- resample(map,val)
+        map_val <- raster::resample(map,val)
 
         # Replace specified na_val with NA
         if (!is.na(na_val)){
@@ -89,7 +59,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
         }
 
         # Compute confusion matrix
-        cmat <- na.omit(crosstab(map_val,val))
+        cmat <- na.omit(raster::crosstab(map_val,val))
         cdf <- matrix(cmat$Freq,
                       nrow=length(unique(cmat$Var1)),
                       ncol=length(unique(cmat$Var2)),
@@ -103,7 +73,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
     # Build confusion matrix for Raster vs SpatialPolygons
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPolygons")) {
-        rasval <- rasterize(val, map, field = val_field)
+        rasval <- raster::rasterize(val, map, field = val_field)
 
         # Replace specified na_val with NA
         if (!is.na(na_val)){
@@ -111,7 +81,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
             map[map == na_val] <- NA
         }
 
-        cmat <-  na.omit(crosstab(map,rasval))
+        cmat <-  na.omit(raster::crosstab(map,rasval))
         cdf <- matrix(cmat$Freq,
                       nrow=length(unique(cmat$Var1)),
                       ncol=length(unique(cmat$Var2)),
@@ -132,7 +102,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
             map[map == na_val] <- NA
         }
 
-        mapvals <- extract(map,val)
+        mapvals <- raster::extract(map,val)
         cmat <-  table(val@data[,val_field],mapvals)
     }
 
@@ -143,10 +113,8 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
     # Build confusion matrix for SpatialPolygons vs SpatialPoints
     if (inherits(map, "SpatialPolygons") & inherits(val,"SpatialPoints")) {
-        mapvals <- over(val, map[,map_field])
+        mapvals <- sp::over(val, map[,map_field])
         cmat <- table(val@data[,val_field],mapvals[,map_field])
     }
     return(cmat)
 }
-
-

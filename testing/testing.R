@@ -3,10 +3,7 @@
 ### Testing script for all package functions
 
 # Get test data
-source("R/rsacc_test.R")
-
-# We need our error matrix functions
-source("R/build_confusion_matrix.R")
+source("testing/rsacc_test.R")
 
 ### Testing the functions
 
@@ -64,9 +61,6 @@ SPlvSPt_mf_vf_rpjF <- conf_mat(map_poly,val_points, map_field="DN", val_field = 
 SPlvSPt_mf_vf_rpjT <- conf_mat(map_poly,val_points, map_field="DN", val_field = "DN", reproj = T)
 # map_field = given, val_field = given, reproj = T, na_val = given PASS
 SPlvSPt_mf_vf_rpjT_nva0 <- conf_mat(map_poly,val_points, map_field="DN", val_field = "DN", reproj = T, na_val = 0)
-
-# Bring accuracy functions
-source("R/accuracy_functions.R")
 
 ####### Testing accuracy functions
 
