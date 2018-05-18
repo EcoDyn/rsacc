@@ -3,19 +3,19 @@
 An `R` package to perform accuracy assessment of remote sensing land-use classifications. The package can auto-detect input types, and then reproject and/or resample data if necessary and adapt calculations for different input combinations.
 
 To install, you will need the `devtools` package installed:
-```
+```R
 install.packages("devtools")
 ```
 
 You can then install `rsacc` using:
-```
+```R
 devtools::install_github("EcoDyn/rsacc")
 ```
 
 There are only three functions for now. First, build the confusion matrix between classification and validation datasets. Classification can be given as a `raster` object (package `raster`) or a `SpatialPolygonsDataFrame` (usually imported using `raster::shapefile`). Validation data can be `raster`, `SpatialPolygonsDataFrame`, or `SpatialPointsDataFrame`. 
 
 Example:
-```
+```R
 library(raster)
 
 > # read in classification data
@@ -49,9 +49,11 @@ Reprojecting validation to match map.
 
 If you are working with `Spatial` objects, be sure to specify column names where the class labels are stored, using `map_field = ` and `val_field = `. Also remember to specify nodata values using `na_val = `, to avoid class mismatches between classification and validation. For now, all datasets need to have the same nodata value. 
 
-Once you have a confusion matrix, there are two accuracy functions.`kia` calculates Overall Accuracy, Kappa Index of Agreement, and per-class Omission and Comission errors. `pontius()` calculates Allocation and Quantity disagrement according to Pontius & Millones (2011).
+External confusion matrices can also be used, as long as they are an object of the `matrix` class and have named rows and columns.
 
-```
+Once you have a confusion matrix, there are two accuracy functions:`kia` calculates Overall Accuracy, Kappa Index of Agreement, and per-class Omission and Comission errors, and `pontius()` calculates Allocation and Quantity disagrement according to Pontius & Millones (2011).
+
+```R
 > kia(cmat)
 $`Overall Accuracy`
                          Accuracy_results
