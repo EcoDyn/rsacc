@@ -53,7 +53,7 @@ If you are working with `Spatial` objects, be sure to specify column names where
 
 External confusion matrices can also be used, as long as they are an object of the `matrix` class and have named rows and columns.
 
-Once you have a confusion matrix, there are two accuracy functions:`kia` calculates Overall Accuracy, Kappa Index of Agreement, and per-class Omission and Comission errors, and `pontius()` calculates Allocation and Quantity disagrement according to Pontius & Millones (2011).
+Once you have a confusion matrix, there are two accuracy functions:`kia` calculates Overall Accuracy, Kappa Index of Agreement, and per-class Omission and Comission errors, and `pontius()` calculates Quantity, Allocation, Exchange and Shift disagrements according to Pontius & Millones (2011) and Pontius & Santacruz (2014).
 
 ```R
 > kia(cmat)
@@ -71,12 +71,25 @@ $`Class Accuracy`
 4         0.2130          0.1905
 
 > pontius(cmat)
-$`Pontius Disagreement Metrics`
-                        Value
-Overall Agreement       0.900
-Overall Disagreement    0.100
-Allocation Disagreement 0.082
-Quantity Disagreement   0.018
+$`Pontius et al. 2011 Disagreement Metrics:`
+                                Value
+Overall Agreement               0.900
+Overall Disagreement            0.100
+Overall Quantity Disagreement   0.018
+Overall Allocation Disagreement 0.082
+
+$`Decomposing your Allocation Disagreement as in Pontius and Santacruz 2014:`
+                              Value
+Overall Exchange Disagreement 0.068
+Overall Shift Disagreement    0.014
+
+$`Disagreement Metrics at class level:`
+  Classes Quantity Exchange Shift
+1       1    0.010    0.064 0.004
+2       2    0.002    0.004 0.012
+3       3    0.018    0.000 0.000
+4       4    0.006    0.068 0.012
+
 
 > 
 ```
