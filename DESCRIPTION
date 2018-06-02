@@ -12,5 +12,6 @@ Imports:
     stats,
     raster,
     rgdal,
-    sp
+    sp,
+    diffeR
 RoxygenNote: 6.0.1

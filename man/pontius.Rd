@@ -2,7 +2,7 @@
 % Please edit documentation in R/pontius.R
 \name{pontius}
 \alias{pontius}
-\title{Calculates quantity and allocation disagreement indexes.}
+\title{Calculates quantity, allocation, exchange and shift disagreement indexes.}
 \usage{
 pontius(confmat)
 }
@@ -10,9 +10,9 @@ pontius(confmat)
 \item{confmat}{a confusion matrix created by conf_mat(), or matrix with named columns and rows.}
 }
 \value{
-Overall agreement and disagreement, Allocation Disagreement, Quantity Disagreement.
+Overall agreement, disagreement, Quantity Disagreement, Allocation Disagreement, Exchange Disagreement, Shift Disagreement, and metrics at class level.
 }
 \description{
 function to calculate the disagreement measures from:
-Pontius Jr, Robert Gilmore, and Marco Millones. "Death to Kappa: birth of quantity disagreement and allocation disagreement for accuracy assessment." International Journal of Remote Sensing 32.15 (2011): 4407-4429.
+Pontius Jr, Robert Gilmore, and Millones, Marco. "Death to Kappa: birth of quantity disagreement and allocation disagreement for accuracy assessment." International Journal of Remote Sensing 32.15 (2011): 4407-4429 AND Pontius Jr, Robert Gilmore, and Santacruz, Alí. "Quantity, exchange, and shift components of difference in a square contingency table." International Journal of Remote Sensing, 35.21 (2014): 7543–7554.
 }
