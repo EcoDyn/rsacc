@@ -8,6 +8,10 @@
 #' @param val_field Which column of the validation *SpatialPolygonsDataFrame* or *SpatialPointsDataFrame* has class labels? Only used if validation input is a *Spatial* object.
 #' @param reproj logical flag indicating if classification data should be reprojected to match reference data.
 #' @param na_val are there data values that should be considered as NODATA? Specified value will be replaced by NA.
+#' @param use_extract use *extract* method instead of *resample* method, See notes.
+#'
+#' @details When the classification results are a *raster* object and the reference data is a *SpatialPolygonsDataFrame*, the default method is to rasterize the reference data to match the classification grid. This can be slow and memory-heavy for large rasters. Setting 'use_extract = TRUE' will extract pixel values from the classification raster, based on vector layer instead. Thus method may be slower than the 'rasterize" method if polygons cover a large portion of the classification raster.
+#'
 #' @return The sum of \code{x} and \code{y}
 #'
 #' @importFrom sp spTransform
@@ -21,7 +25,7 @@
 
 
 #' @export
-conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE){
+conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE, use_extract = FALSE){
 
     # Check if all required parameters are given
     if (inherits(map,"Spatial") & is.na(map_field)){
@@ -33,21 +37,22 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
     # Reprojects val data to match map
     check <- check_inputs(map,val,reproj = reproj)
-    if (check == FALSE & reproj == FALSE){
+    if (check == FALSE){
+        if (reproj == FALSE){
         stop("Projections are not the same!")} else {
         message("Reprojecting validation to match map.")
 
-        # If val is a Spatial object
-        if (inherits(val,'Spatial')){
-            val <- sp::spTransform(val,CRSobj = raster::projection(map))
-        }
+            # If val is a Spatial object
+            if (inherits(val,'Spatial')){
+                val <- sp::spTransform(val,CRSobj = raster::projection(map))
+            }
 
-        # If val is a Raster object
-        if (inherits(val,'Raster')){
-        val <- raster::projectRaster(val,crs = raster::projection(map), method = "ngb")
+            # If val is a Raster object
+            if (inherits(val,'Raster')){
+            val <- raster::projectRaster(val,crs = raster::projection(map), method = "ngb")
+            }
         }
     }
-
     # Build confusion matrix for Raster vs Raster
     if (class(map) == "RasterLayer" & class(val) == "RasterLayer"){
         map_val <- raster::resample(map,val)
@@ -73,24 +78,40 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
     # Build confusion matrix for Raster vs SpatialPolygons
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPolygons")) {
-        rasval <- raster::rasterize(val, map, field = val_field)
+        if (use_extract == FALSE){
+            
+            ### rasterize method
+            message("Using 'rasterize' method. Might be slow and/or result in a memory error if classification raster is too large. Consider using 'use_extract = TRUE'.")
+            rasval <- raster::rasterize(val, map, field = as.numeric(val@data[,val_field]))
 
-        # Replace specified na_val with NA
-        if (!is.na(na_val)){
-            rasval[rasval == na_val] <- NA
-            map[map == na_val] <- NA
+            # Replace specified na_val with NA
+            if (!is.na(na_val)){
+                rasval[rasval == na_val] <- NA
+                map[map == na_val] <- NA
+            }
+
+            cmat <- raster::crosstab(map,rasval)
+            cdf <- matrix(cmat$Freq,
+                          nrow=length(unique(cmat$Var1)),
+                          ncol=length(unique(cmat$Var2)),
+                          byrow=F)
+            valnames <- na.omit(as.character(unique(cmat$Var2)))
+            mapnames <- na.omit(as.character(unique(cmat$Var1)))
+            colnames(cdf) <- valnames
+            rownames(cdf) <- mapnames
+            return(cdf)
+
+        } else {
+            
+            ### extract method
+            message("Using 'extract' method. Might be slow if validation polygons cover a large portion of the classified raster. Consider using 'use_extract = FALSE'.")
+            classdf <- raster::extract(map,val,df=T)
+            valdf <- data.frame(class_val = val@data[,c(val_field)],
+                      ID = sapply(slot(val, "polygons"), function(x) slot(x, "ID")))
+            cvdf <- merge(classdf,valdf,by='ID')
+            cmat <-  table(cvdf[,-1])
+            return(cmat)
         }
-
-        cmat <-  na.omit(raster::crosstab(map,rasval))
-        cdf <- matrix(cmat$Freq,
-                      nrow=length(unique(cmat$Var1)),
-                      ncol=length(unique(cmat$Var2)),
-                      byrow=F)
-        valnames <- na.omit(as.character(unique(cmat$Var2)))
-        mapnames <- na.omit(as.character(unique(cmat$Var1)))
-        colnames(cdf) <- valnames
-        rownames(cdf) <- mapnames
-        return(cdf)
     }
 
     # Build confusion matrix for Raster vs SpatialPoints
