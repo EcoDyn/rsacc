@@ -5,7 +5,7 @@
 \title{Build a confusion matrix from classified *raster* or *Spatial* objects.}
 \usage{
 conf_mat(map, val, map_field = NA, val_field = NA, na_val = NA,
-  reproj = FALSE)
+  reproj = FALSE, use_extract = FALSE)
 }
 \arguments{
 \item{map}{classification results as a *raster* or *SpatialPolygons* object.}
@@ -19,10 +19,15 @@ conf_mat(map, val, map_field = NA, val_field = NA, na_val = NA,
 \item{na_val}{are there data values that should be considered as NODATA? Specified value will be replaced by NA.}
 
 \item{reproj}{logical flag indicating if classification data should be reprojected to match reference data.}
+
+\item{use_extract}{use *extract* method instead of *resample* method, See notes.}
 }
 \value{
 The sum of \code{x} and \code{y}
 }
 \description{
 This function builds confusion matrices by overlaying *raster* or *Spatial* objects, automatically choosing the best method depending on input class.
+}
+\details{
+When the classification results are a *raster* object and the reference data is a *SpatialPolygonsDataFrame*, the default method is to rasterize the reference data to match the classification grid. This can be slow and memory-heavy for large rasters. Setting 'use_extract = TRUE' will extract pixel values from the classification raster, based on vector layer instead. Thus method may be slower than the 'rasterize" method if polygons cover a large portion of the classification raster.
 }
