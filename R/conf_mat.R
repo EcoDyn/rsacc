@@ -79,7 +79,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
     # Build confusion matrix for Raster vs SpatialPolygons
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPolygons")) {
         if (use_extract == FALSE){
-            
+
             ### rasterize method
             message("Using 'rasterize' method. Might be slow and/or result in a memory error if classification raster is too large. Consider using 'use_extract = TRUE'.")
             rasval <- raster::rasterize(val, map, field = as.numeric(val@data[,val_field]))
@@ -91,18 +91,25 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
             }
 
             cmat <- raster::crosstab(map,rasval)
-            cdf <- matrix(cmat$Freq,
-                          nrow=length(unique(cmat$Var1)),
-                          ncol=length(unique(cmat$Var2)),
-                          byrow=F)
-            valnames <- na.omit(as.character(unique(cmat$Var2)))
-            mapnames <- na.omit(as.character(unique(cmat$Var1)))
-            colnames(cdf) <- valnames
-            rownames(cdf) <- mapnames
-            return(cdf)
+            if (inherits(cmat, 'data.frame')){
+                names(cmat) <- c('map','val','freq')
+                cdf <- matrix(cmat$freq,
+                              nrow=length(unique(cmat$map)),
+                              ncol=length(unique(cmat$val)),
+                              byrow=F)
+                valnames <- na.omit(as.character(unique(cmat$val)))
+                mapnames <- na.omit(as.character(unique(cmat$map)))
+                colnames(cdf) <- valnames
+                rownames(cdf) <- mapnames
+                return(cdf)
+            } else {
+                cmatx <- as.matrix(cmat)
+                cmatx[,as.character(sort(as.integer(colnames(cmatx))))]
+                return(cmatx)
+            }
 
         } else {
-            
+
             ### extract method
             message("Using 'extract' method. Might be slow if validation polygons cover a large portion of the classified raster. Consider using 'use_extract = FALSE'.")
             classdf <- raster::extract(map,val,df=T)
