@@ -19,6 +19,7 @@ There are only three functions for now. First, build the confusion matrix betwee
 Example:
 ```R
 library(raster)
+library(rsacc)
 
 > # read in classification data
 > map_data <- raster("sample_data/LandsatClassification.tif")
