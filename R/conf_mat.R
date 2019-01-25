@@ -108,7 +108,8 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
                 return(cmatx)
             }
 
-        } else {
+        }
+        if (use_extract == TRUE) {
 
             ### extract method
             message("Using 'extract' method. Might be slow if validation polygons cover a large portion of the classified raster. Consider using 'use_extract = FALSE'.")
