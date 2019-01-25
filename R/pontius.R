@@ -36,7 +36,7 @@ pontius <- function(confmat){
     S <- overallShiftD(confsumms$confpmat)/100
 
     # Decomponsing metrics per class as in Pontius and Santacruz 2014
-    class_metrics <- diffTablej(confsumms$confpmat)
+    class_metrics <- diffTablej(unclass(confsumms$confpmat))
 
     # Droping E and S from diffTablej, alreade computed to be shown in our 'output style'
     class_metrics <- class_metrics[-nrow(class_metrics), ]
