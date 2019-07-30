@@ -21,11 +21,12 @@
 #' @importFrom raster projectRaster
 #' @importFrom raster extract
 #' @importFrom stats na.omit
+#' @importFrom velox velox
 
 
 
 #' @export
-conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE, use_extract = FALSE){
+conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FALSE, use_extract = FALSE, use_velox = FALSE){
 
     # Check if all required parameters are given
     if (inherits(map,"Spatial") & is.na(map_field)){
@@ -78,7 +79,35 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
 
     # Build confusion matrix for Raster vs SpatialPolygons
     if (class(map) == "RasterLayer" & inherits(val,"SpatialPolygons")) {
-        if (use_extract == FALSE){
+        if (use_velox == TRUE){
+            message("Using 'velox' method.")
+            if (require(velox)==FALSE) {
+                stop("Package 'velox' not installed")
+            } else {
+                # remove NA values
+                if (!is.na(na_val)){
+                    ind <- which(val@data[,val_field] == na_val)
+                    val <- val[-ind,]
+                    map[map == na_val] <- NA
+                }
+                # veloxize the map
+                vel_map <- velox(map)
+                # Get unique class ids
+                class_ids = unique(val@data[,val_field])
+                # Create empty dataframe
+                df_ext <- data.frame(map = numeric(0), val = numeric(0))
+                for (i in c(1:length(class_ids))){
+                    sel_ind <- which(val@data[,val_field] == class_ids[i])
+                    val_sub <- val[sel_ind,]
+                    map_ext <- unlist(vel_map$extract(sp = val_sub, small = TRUE))
+                    df_ext <- rbind(df_ext,data.frame(map = map_ext, val = class_ids[i]))
+                }
+                cdf <- table(df_ext)
+                return(cdf)
+            }
+        }
+
+        if (use_velox == FALSE & use_extract == FALSE){
 
             ### rasterize method
             message("Using 'rasterize' method. Might be slow and/or result in a memory error if classification raster is too large. Consider using 'use_extract = TRUE'.")
@@ -109,7 +138,7 @@ conf_mat <- function(map, val, map_field=NA, val_field=NA, na_val=NA, reproj=FAL
             }
 
         }
-        if (use_extract == TRUE) {
+        if (use_velox == FALSE & use_extract == TRUE) {
 
             ### extract method
             message("Using 'extract' method. Might be slow if validation polygons cover a large portion of the classified raster. Consider using 'use_extract = FALSE'.")
